@@ -11,39 +11,38 @@ const scoreOrcs = document.querySelector(".score_orcs");
 const scoreTanks = document.querySelector(".score_tanks");
 const playArea = document.querySelector(".playing_area");
 
-let bestNickName = document.querySelector(".nick-name");
-let bestKill = document.querySelector(".best-kill");
-let nickName = "";
-let stopGame = false;
-let interval;
-let timer = 4000;
-let count = 0;
-let score = 0;
-let tankScore = 0;
-let bestScore = 0;
-let targetsCount = 0;
-let rank = "рядовий";
-let moreKill = score + tankScore;
+let bestNickName = document.querySelector(".nick-name"); //showing the best player
+let bestKill = document.querySelector(".best-kill"); //showing the best score
+let nickName = ""; //save nick
+let stopGame = false; //flag stop/start game
+let interval; //the interval with which targets are displayed
+let timer = 4000; //the initial value of the interval
+let targetCounter = 0; //target counter
+let destroyedTargets = 0; //counter of destroyed targets
+let score = 0; //destroyed targets
+let tankScore = 0; // destroyed tanks
+let rank = "рядовий"; // the initial rank
+let moreKill = score + tankScore; // best score
 
 const targets = [
-   "orc_1",
-   "orc_2",
-   "orc_3",
-   "orc_4",
-   "orc_5",
-   "orc_6",
+  "orc_1",
+  "orc_2",
+  "orc_3",
+  "orc_4",
+  "orc_5",
+  "orc_6",
   "tank",
   "kozak",
   "kozak2",
 ];
 
 const targetAnimation = [
-   "animation_orc_1",
-   "animation_orc_2",
-   "animation_orc_1",
-   "animation_orc_1",
-   "animation_orc_5",
-   "animation_orc_6",
+  "animation_orc_1",
+  "animation_orc_2",
+  "animation_orc_1",
+  "animation_orc_1",
+  "animation_orc_5",
+  "animation_orc_6",
   "tank_animation",
   "animation_kozak",
   "animation_kozak",
@@ -88,11 +87,14 @@ function showGeneral(firstText, secondText, thitdText) {
     divForGeneral.remove();
     btnStart.remove();
     wrapper.style.cursor = 'url("./img/curs.png"), auto';
+    destroyedTargets = 0;
+    targetCounter = 0;
     stopGame = false;
     periodicCreationTargets();
     wrapper.addEventListener("click", shot);
   });
 }
+
 function createStartWindow() {
   const divForStartGame = document.createElement("div");
   divForStartGame.classList.add("start-game");
@@ -121,7 +123,7 @@ function createStartWindow() {
       showGeneral(
         "Здоров'я бажаю",
         "На тебе чекає просте, але важливе завдання...",
-        "МОЧИТИ РУСНЮ!!! Хай прибуде з тобою F16!"
+        "Мочити русню!!! Хай прибуде з тобою F16! Не стріляй по своїх!"
       );
     } else {
       inputName.style.background = "#ff0000";
@@ -141,14 +143,14 @@ startGame();
 // create a target
 function createTarget() {
   let divForOrc = document.createElement("div");
-  if (stopGame && count === 5) {
+  if (stopGame && targetCounter === 20) {
     return;
   } else {
-    count++;
+    targetCounter++;
     let randomIndex = () => Math.floor(Math.random() * targets.length); //choose a random element from the target array and an animation
     let index = randomIndex();
     let [elem, anime] = [targets[index], targetAnimation[index]];
-    
+
     function showTarget() {
       //display the target on the arena
       wrapper.append(divForOrc);
@@ -168,10 +170,10 @@ function periodicCreationTargets() {
     return;
   } else {
     interval = setInterval(function () {
-      if (count === 5) {
+      if (targetCounter === 20) {
+        //If 20 targets are displayed, stop the game
         stopGame = true;
         clearInterval(interval);
-        count = 0;
         timer -= 500;
         switch (timer) {
           case 4000:
@@ -195,7 +197,7 @@ function periodicCreationTargets() {
           case 1000:
             rank = "ПОЛКОВНИК";
             break;
-          case 500:
+          case 500: // you win
             setTimeout(
               showGeneral(
                 "Вітаю з перемогою!",
@@ -204,12 +206,15 @@ function periodicCreationTargets() {
               ),
               2000
             );
-            count = 0;
+            targetCounter = 0;
             timer = 4000;
             return;
         }
-
-        if (timer > 500 && stopGame === true) {
+        if (destroyedTargets < 10 && targetCounter === 20) {
+          //If less than 10 targets are destroyed, stop the game
+          gameOver();
+        } else if (timer > 500 && stopGame === true) {
+          //If the timer is more than 500, next level
           setTimeout(
             showGeneral(
               "Вітаю з новим званням",
@@ -237,6 +242,7 @@ function shot(e) {
     e.target.style.scale = "1.6";
     killAudio.play();
     score++;
+    destroyedTargets++;
     scoreOrcs.innerHTML = score;
 
     setTimeout(() => {
@@ -266,6 +272,7 @@ function shot(e) {
     function destroyedTank() {
       shotAudio.play();
       tankCount++;
+      destroyedTargets++;
       let smoke = document.createElement("div");
       e.target.append(smoke);
       smoke.classList.add("tank-smoke");
@@ -313,10 +320,10 @@ function shot(e) {
 // Stop game
 
 function gameOver() {
-  gameOverAudio.play()
+  gameOverAudio.play();
   stopGame = true;
   timer = 4000;
-  clearInterval(interval); 
+  clearInterval(interval);
   const gameOverDiv = document.createElement("div");
   gameOverDiv.classList.add("game-over-div");
   wrapper.append(gameOverDiv);
@@ -342,7 +349,7 @@ function gameOver() {
     gameOverDiv.remove();
     textGameOver.remove();
     const wrapperBudanov = document.createElement("div");
-    wrapperBudanov.classList.add("wrapper-budanov")
+    wrapperBudanov.classList.add("wrapper-budanov");
     wrapper.append(wrapperBudanov);
     wrapperBudanov.classList.add("wrapper-budanov-anime");
 
@@ -355,16 +362,17 @@ function gameOver() {
       badaBoom.classList.add("badaboom-anime");
       setTimeout(() => badaBoom.remove(), 2000);
 
-
       if (score + tankScore > moreKill) {
         moreKill = score + tankScore;
         bestNickName.innerText = nickName;
         bestKill.innerText = `Знищено: ${moreKill}`;
       }
-
+      destroyedTargets = 0;
       tankScore = 0;
       score = 0;
+      targetCounter = 0;
       rank = "рядовий";
+      wrapper.style.cursor = "";
       scoreOrcs.innerText = score;
       scoreTanks.innerText = tankScore;
       startGame();
