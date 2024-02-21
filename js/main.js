@@ -236,7 +236,7 @@ function periodicCreationTargets() {
 function shot(e) {
   function bloodShot() {
     shotAudio.play();
-    e.target.style.background = 'url("../img/head_shot.png")';
+    e.target.style.background = 'url("./img/head_shot.png")';
     e.target.style.backgroundSize = "cover";
     e.target.style.zIndex = "20";
     e.target.style.scale = "1.6";
